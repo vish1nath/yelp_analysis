@@ -20,10 +20,13 @@ from scipy.cluster.hierarchy import cophenet
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import fcluster
 
+
+#Function to run word2vec model
 def runword2vec(final_txt):
     model = gensim.models.Word2Vec(final_txt,size=150,window=10,min_count=10,workers=10,iter=10)
     return model
 
+#function to get the tfidf matrix
 def tfidfwords(final_txt):
     cv=CountVectorizer()
     word_count_vector=cv.fit_transform([ ' '.join(i) for i in final_txt ])
@@ -32,6 +35,8 @@ def tfidfwords(final_txt):
     vocab = [v[0] for v in sorted(vect.vocabulary_.items(), key=operator.itemgetter(1))]
     return tfidf_matrix,vocab
     
+#function to get list of postive and negative words list from reviews
+#reviews with star rating>4 is positive and <2 is negative
 def getPosNegWords(rev1,vocab,tfidf_matrix):
     rev1['score']=rev1.stars-rev1.stars.mean()
     rev1=rev1.reset_index()
@@ -45,6 +50,7 @@ def getPosNegWords(rev1,vocab,tfidf_matrix):
     negwords=sorted(negd.items(),key=operator.itemgetter(1),reverse=True)
     return poswords,negwords
 
+#function to visulize the word cloud
 def sentimentcloud(poswords,negwords):
     wordcloud = WordCloud(width=1600, height=800, random_state=1, max_words=500, background_color='white',)
 
@@ -66,6 +72,7 @@ def sentimentcloud(poswords,negwords):
     plt.tight_layout(pad=10)
     plt.savefig('neg.png')
 
+#function to create dendogram to view the word topics
 def getDendrogramTopics(tfidf_matrix,vocab,model):
     freq = np.ravel(tfidf_matrix.sum(axis=0))
     fdist = dict(zip(vocab, freq)) 
@@ -89,15 +96,15 @@ def getDendrogramTopics(tfidf_matrix,vocab,model):
     
 def main(argv):
     rev=pd.read_csv(sys.argv[1],encoding='UTF-8')#read the reviews file
-    filt_condition=sys.argv[2]
-    filt_variable=sys.argv[3]
+    filt_condition=sys.argv[2]#Filter condition can be on Businees,user,category, or city
+    filt_variable=sys.argv[3]#filter value
     rev1=rev[rev[filt_condition]==filt_variable]
     print len(rev),len(rev1)
-    rev1['tokenized_text'] = rev1['text'].apply(lambda x:x.lower()).apply(word_tokenize) 
+    rev1['tokenized_text'] = rev1['text'].apply(lambda x:x.lower()).apply(word_tokenize) #word tokenization
     punctuation = list(string.punctuation)
     stopWords = set(stopwords.words('english'))
     docs=list(rev1['tokenized_text'])
-
+#stop word removal
     filtered_docs=[]
     for i in docs:
         filt = []
@@ -105,7 +112,7 @@ def main(argv):
             if w.lower()not in stopWords and w not in punctuation:
                 filt.append(w)
         filtered_docs.append(filt)
-
+#stemming
     nlp = en_core_web_sm.load()
 
     final_txt=[[t.lemma_ for t in nlp(' '.join(i))] for i in filtered_docs]
