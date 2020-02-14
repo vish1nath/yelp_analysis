@@ -12,4 +12,5 @@
 
 5.The doc2vec_classification script is to run machine learning models to classify if the review is useful or not based on the Doc2vec vectors created.
 
+
 6. The Word2vec_GRUModel script run a Gated recurrent neural network to classify if review is useful or not using word2vec vectors.
